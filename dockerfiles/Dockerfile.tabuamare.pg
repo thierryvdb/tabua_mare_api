@@ -24,14 +24,7 @@ RUN git clone https://github.com/vlang/v && \
 WORKDIR /app
 COPY . .
 
-RUN v install && \
-    v install https://github.com/ken0x0a/v-dotenv && \
-    echo "=== Modulos instalados ===" && \
-    ls -la ~/.vmodules/ && \
-    ls -la ~/.vmodules/dotenv/ 2>/dev/null || true && \
-    ls -la ~/.vmodules/ken0x0a/ 2>/dev/null || true
-
-RUN v version
+RUN v install
 
 RUN v -ldflags "-Wl,--gc-sections -ffunction-sections -fdata-sections" -gc boehm_incr_opt -d use_openssl -prod . -o TabuaMareAPI
 
