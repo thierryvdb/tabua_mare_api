@@ -1,0 +1,56 @@
+# ============================================
+# Stage 1: Builder - compila a API para PostgreSQL
+# ============================================
+FROM ubuntu:20.04 AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    build-essential \
+    libpq-dev \
+    ca-certificates \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /tmp
+RUN git clone https://github.com/vlang/v && \
+    cd v && \
+    make && \
+    ./v symlink && \
+    v --version
+
+WORKDIR /app
+COPY v.mod ./
+RUN v install && \
+    v install https://github.com/ken0x0a/v-dotenv
+
+COPY . .
+
+RUN v -ldflags "-Wl,--gc-sections -ffunction-sections -fdata-sections" -gc boehm_incr_opt -d use_openssl -prod . -o TabuaMareAPI
+
+# ============================================
+# Stage 2: Runtime
+# ============================================
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    libpq5 \
+    ca-certificates \
+    curl \
+    libssl1.1 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY --from=builder /app/TabuaMareAPI .
+COPY --from=builder /app/pages ./pages
+COPY --from=builder /app/cache ./cache
+
+EXPOSE 4048
+ENV PORT=4048
+
+ENTRYPOINT ["./TabuaMareAPI"]
