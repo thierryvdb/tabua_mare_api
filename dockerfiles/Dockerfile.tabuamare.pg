@@ -28,6 +28,8 @@ RUN v install && \
 
 COPY . .
 
+RUN v version
+
 RUN v -ldflags "-Wl,--gc-sections -ffunction-sections -fdata-sections" -gc boehm_incr_opt -d use_openssl -prod . -o TabuaMareAPI
 
 # ============================================
